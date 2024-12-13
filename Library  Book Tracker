@@ -1,0 +1,143 @@
+# JennaWalkerFinalProject.py
+# Final Project: Library Book Tracker
+# Author: Jenna Walker
+# Date: December 12, 2024
+
+import tkinter as tk
+from tkinter import messagebox, PhotoImage, simpledialog
+
+class LibraryBookTracker:
+    """
+    Library Book Tracker application for managing personal books.
+    Features:
+        - Add new books with title, author, and reading status.
+        - View a list of books.
+        - Update or delete book details.
+    """
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Library Book Tracker")
+        self.books = []  # List to store book entries
+
+        self.main_menu()
+
+    def main_menu(self):
+        """Display the main menu of the application."""
+        self.clear_window()
+
+        # Add application logo
+        try:
+            logo = PhotoImage(file="library_logo.png")
+            logo_label = tk.Label(self.root, image=logo)
+            logo_label.image = logo  # Keep a reference to avoid garbage collection
+            logo_label.pack(pady=10)
+        except Exception:
+            tk.Label(self.root, text="Library Book Tracker", font=("Helvetica", 16)).pack(pady=10)
+
+        tk.Button(self.root, text="Add Book", width=20, command=self.add_book_window).pack(pady=5)
+        tk.Button(self.root, text="View Book List", width=20, command=self.view_books_window).pack(pady=5)
+        tk.Button(self.root, text="Exit", width=20, command=self.root.quit).pack(pady=5)
+
+    def add_book_window(self):
+        """Display the Add Book form for user input."""
+        self.clear_window()
+        tk.Label(self.root, text="Add New Book", font=("Helvetica", 16)).pack(pady=10)
+
+        tk.Label(self.root, text="Book Title").pack(pady=5)
+        self.book_title_entry = tk.Entry(self.root, width=30)
+        self.book_title_entry.pack(pady=5)
+
+        tk.Label(self.root, text="Author").pack(pady=5)
+        self.author_entry = tk.Entry(self.root, width=30)
+        self.author_entry.pack(pady=5)
+
+        tk.Label(self.root, text="Reading Status").pack(pady=5)
+        self.status_var = tk.StringVar(value="Want to Read")
+        tk.OptionMenu(self.root, self.status_var, "Want to Read", "Currently Reading", "Read").pack(pady=5)
+
+        tk.Button(self.root, text="Save Book", width=20, command=self.save_book).pack(pady=5)
+        tk.Button(self.root, text="Cancel", width=20, command=self.main_menu).pack(pady=5)
+
+    def save_book(self):
+        """Save a new book into the collection."""
+        title = self.book_title_entry.get().strip()
+        author = self.author_entry.get().strip()
+        status = self.status_var.get()
+
+        if not title or not author:
+            messagebox.showerror("Input Error", "All fields must be filled.")
+            return
+
+        self.books.append({"title": title, "author": author, "status": status})
+        messagebox.showinfo("Success", f"'{title}' by {author} added.")
+        self.main_menu()
+
+    def view_books_window(self):
+        """Show the list of books with options to update or delete."""
+        self.clear_window()
+        tk.Label(self.root, text="View Books", font=("Helvetica", 16)).pack(pady=10)
+
+        # Display books in a Listbox
+        self.book_listbox = tk.Listbox(self.root, width=50, height=10)
+        for book in self.books:
+            self.book_listbox.insert(tk.END, f"{book['title']} by {book['author']} - {book['status']}")
+        self.book_listbox.pack(pady=10)
+
+        tk.Button(self.root, text="Update Book", width=20, command=self.update_book).pack(pady=5)
+        tk.Button(self.root, text="Delete Book", width=20, command=self.delete_book).pack(pady=5)
+        tk.Button(self.root, text="Return to Main Menu", width=20, command=self.main_menu).pack(pady=5)
+
+    def update_book(self):
+        """Update the reading status of a selected book."""
+        index = self.book_listbox.curselection()
+        if not index:
+            messagebox.showerror("Selection Error", "Select a book to update.")
+            return
+
+        book = self.books[index[0]]
+        self.update_status_window(book)
+
+    def update_status_window(self, book):
+        """Display a window to select the new status for a book."""
+        self.clear_window()
+        tk.Label(self.root, text="Update Book Status", font=("Helvetica", 16)).pack(pady=10)
+
+        tk.Label(self.root, text=f"Current Status: {book['status']}").pack(pady=5)
+
+        tk.Label(self.root, text="New Status").pack(pady=5)
+        new_status_var = tk.StringVar(value=book['status'])
+        tk.OptionMenu(self.root, new_status_var, "Want to Read", "Currently Reading", "Read").pack(pady=5)
+
+        def save_new_status():
+            new_status = new_status_var.get()
+            if new_status != book['status']:
+                book["status"] = new_status
+                messagebox.showinfo("Updated", f"Status of '{book['title']}' updated to '{new_status}'.")
+                self.view_books_window()  # Refresh the book list
+            else:
+                messagebox.showinfo("No Change", "Status remains the same.")
+                self.view_books_window()
+
+        tk.Button(self.root, text="Save", width=20, command=save_new_status).pack(pady=5)
+        tk.Button(self.root, text="Cancel", width=20, command=self.view_books_window).pack(pady=5)
+
+    def delete_book(self):
+        """Delete the selected book."""
+        index = self.book_listbox.curselection()
+        if not index:
+            messagebox.showerror("Selection Error", "Select a book to delete.")
+            return
+
+        book = self.books.pop(index[0])
+        messagebox.showinfo("Deleted", f"Deleted '{book['title']}'.")
+        self.view_books_window()  # Refresh the book list
+
+    def clear_window(self):
+        """Clear all widgets from the window."""
+        for widget in self.root.winfo_children():
+            widget.destroy()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = LibraryBookTracker(root)
+    root.mainloop()
